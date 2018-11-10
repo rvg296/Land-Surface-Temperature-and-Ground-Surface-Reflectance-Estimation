@@ -1,0 +1,136 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import org.apache.commons.io.FileUtils;
+public class Dntoreflectance {
+    //Minimum quantized pixel calibrated pixel value
+    public float QCALMIN;
+    //Maximum quantized pixel calibrated pixel value
+    public float QCALMAX;
+    //(Spectral radiance of DN value 1)
+    public float LMIN;
+    //(Spectral radiance of DN value 255)
+    public float LMAX;
+    //Earth-sun distance in astronomical units
+        public float d;
+        //Mean solar exoatmospheric irradiance
+        public float ESUN;
+        //Solar Zenith angle
+        public float theta;
+    public void loadProperties()
+    {
+        InputStream is = this.getClass().getClassLoader().getResourceAsStream("xyz.properties");
+        Properties p = new Properties();
+        try {
+            p.load(is);
+            QCALMIN = Float.parseFloat(p.getProperty("config1.QCALMIN"));
+            QCALMAX = Float.parseFloat(p.getProperty("config1.QCALMAX"));
+            LMIN = Float.parseFloat(p.getProperty("config1.LMIN"));
+            LMAX = Float.parseFloat(p.getProperty("config1.LMAX"));
+                         d   = Float.parseFloat(p.getProperty("config1.d"));
+                        ESUN = Float.parseFloat(p.getProperty("config1.ESUN"));
+                        theta= Float.parseFloat(p.getProperty("config1.theta"));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+      
+    }
+    public float getMinimum() throws IOException
+    {
+        List<String> lines = FileUtils.readLines(new File("F:/rohit/Mumbai/rastert_lt514802.txt"));
+        float min = 0;
+        for(int i=0; i < lines.size(); i++)
+        {
+            if(!lines.get(i).contains("//") && !lines.get(i).contains("/*"))
+            {
+                StringTokenizer s = new StringTokenizer(lines.get(i));
+                while(s.hasMoreTokens())
+                {
+                    int x = Integer.parseInt(s.nextElement().toString());
+                    if(min == 0)
+                    {
+                        min = x;
+                    }
+                    else
+                    {
+                        if(x!=0 && x<min)
+                        {
+                            min = x;
+                        }
+                    }   
+                }
+            }
+        }   
+        System.out.println("Min: "+min);
+        return min;
+    }
+    public void readImage() throws IOException
+    {
+        List<String> lines = FileUtils.readLines(new File("F:/rohit/Mumbai/rastert_lt514802.txt"));
+        FileWriter fw = new FileWriter("C:/Users/rvg296/Desktop/output3.txt");
+        fw.flush();
+        fw.flush();
+        PrintWriter out = new PrintWriter(fw);
+        float minimum = getMinimum();
+        for(int i=0; i < lines.size(); i++)
+        {
+            //System.out.println("Line 1: "+lines.get(i));
+            if(!lines.get(i).contains("//") && !lines.get(i).contains("/*"))
+            {
+                StringTokenizer s = new StringTokenizer(lines.get(i));
+                StringBuffer sb = new StringBuffer();
+                while(s.hasMoreTokens())
+                {
+                    int QCAL = Integer.parseInt(s.nextElement().toString());
+                    //System.out.print(QCAL+" ");
+                    if(QCAL!=0)
+                    {
+                        QCAL = (int) (QCAL - minimum);
+                        float L = convertNumberToSpectralRadiance(QCAL);
+                        float px = convertSpectralRadianceToReflectance(L);
+                        sb.append(px+" ");
+                        System.out.print(px+" ");
+                    }
+                    else
+                    {
+                        sb.append(0+" ");
+                        System.out.print(QCAL+" ");
+                    }
+                } 
+                out.println(sb);
+                System.out.println("\n");
+            }
+        }   
+           out.close();
+    }
+    public float convertNumberToSpectralRadiance(float QCAL)
+    {
+        //Spectral radiance
+        float L = ((LMAX-LMIN)/(QCALMAX-QCALMIN))*(QCAL-QCALMIN)+LMIN;      
+        return L;
+    }
+    public float convertSpectralRadianceToReflectance(float L)
+    {
+        //Reflectance
+        float px = (float) ((float) 3.14159*L*Math.pow(d,2)/ESUN*Math.cos(theta));
+        return px;
+        }
+    public static void main(String[] args) {
+        try
+        {
+            Dntoreflectance s = new Dntoreflectance();
+            s.loadProperties();
+            s.readImage();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+}
