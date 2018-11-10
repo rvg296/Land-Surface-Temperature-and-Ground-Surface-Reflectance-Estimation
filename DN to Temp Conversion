@@ -1,0 +1,108 @@
+The following java code is for the conversion of Digital Number to Temperature in degrees centigrade.
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import org.apache.commons.io.FileUtils;
+public class DnToTemp {
+//Calibration Constant 1
+public static float K1;
+//Calibration Constant 2
+public float K2;
+//(Spectral radiance of DN value 1)
+public float LMIN;
+//(Spectral radiance of DN value 255)
+public float LMAX;
+public void loadProperties()
+{
+InputStream is = this.getClass().getClassLoader().getResourceAsStream("constants.properties");
+Properties p = new Properties();
+try {
+p.load(is);
+K1 = Float.parseFloat(p.getProperty("config1.K1"));
+K2 = Float.parseFloat(p.getProperty("config1.K2"));
+LMIN = Float.parseFloat(p.getProperty("config1.LMIN"));
+LMAX = Float.parseFloat(p.getProperty("config1.LMAX"));
+} catch (IOException e) {
+// TODO Auto-generated catch block
+e.printStackTrace();
+}
+}
+public void readImage() throws IOException
+{
+List<String> lines = FileUtils.readLines(new File("F:rohit/Mumbai/rastert_lt514801.txt"));
+System.out.println("Lines read");
+FileWriter fw = new FileWriter("C:/Users/rvg296/Desktop/output1.txt");
+//fw.flush();
+PrintWriter out = new PrintWriter(fw);
+for(int i=0; i < lines.size(); i++)
+{
+if(!lines.get(i).contains("//") && !lines.get(i).contains("/*"))
+{
+//System.out.println("Line 1: "+lines.get(i));
+StringTokenizer s = new StringTokenizer(lines.get(i));
+StringBuffer sb = new StringBuffer();
+while(s.hasMoreTokens())
+{
+int DN = Integer.parseInt(s.nextElement().toString());
+//System.out.print(DN+" ");
+if(DN!=0)
+{
+float L = convertNumberToSpectralRadiance(DN);
+float TB = convertSpectralRadianceToTemperature(L);
+sb.append(TB+" ");
+System.out.print(TB+" ");
+}
+else
+{
+sb.append(0+" ");
+System.out.print(0+" ");
+}
+}
+//output to the file a line
+out.println(sb);
+System.out.println("\n");
+}
+//close the file (VERY IMPORTANT!)
+}
+out.close();
+}
+public float convertNumberToSpectralRadiance(int DN)
+{
+//Spectral radiance
+float L = LMIN + (LMAX - LMIN) * DN / 255;
+return L;
+}
+public float convertSpectralRadianceToTemperature(float L)
+{
+//Surface Temperature
+float TB = (float) (K2/Math.log(K1/L+1));
+//Conversion of Kelvin to Celsius
+TB = TB - 273;
+return TB;
+}
+public static void main(String[] args) {
+try
+{
+DnToTemp s = new DnToTemp();
+s.loadProperties();
+s.readImage();
+System.out.println("Please check the text file Output1 on Desktop");
+}
+catch (IOException e)
+{
+e.printStackTrace();
+}
+}
+}
+
+
+
+Important Note:
+While giving the input ascii file please remove the header format of it and give as input in the code.
+After conversion to temperature the header format can be inserted into the output file from the original source file.
