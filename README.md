@@ -1,4 +1,4 @@
-# Land Surface Temperature and Ground Surface Reflectance estimation from Landsat TM Thermal infrared and Optical Data
+# Abstract
 
 Land surface Temperature (LST) and Ground surface reflectance (GSR) are some of the important parameters in the field of remote sensing whose estimation is necessary.  The former is used to estimate the temperature of a particular chosen surface which the satellite sensor sees through and the latter helps in finding out the characteristics of the objects or features or targets under consideration. The manual measurement of both the parameters through the acquisition of field data is tedious and time consuming where as many satellites provides a data which covers huge areas and are free of cost, but these are available in the form of Digital Number (DN). Hence there is a need to convert these DN values to LST and GSR using suitable band data for further applications. 
 
